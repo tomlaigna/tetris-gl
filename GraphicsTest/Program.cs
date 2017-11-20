@@ -34,7 +34,7 @@ out vec4 fragment;
 
 void main(void)
 {
-  vec4 color = texture2D(texture, uv);  
+  vec4 color = texture2D(texture, uv);
   fragment = color;
 }";
 
@@ -82,12 +82,12 @@ void main(void)
             var texture2 = new Texture("b.png");
 
             ShaderProgram program = new ShaderProgram(vertexShader2Source, fragmentShader2Source);
-            view_matrix = Matrix4.CreateTranslation(new Vector3(-5, 5, -5));
+            view_matrix = Matrix4.Identity * Matrix4.CreateTranslation(new Vector3(-5, -5, -50));
             program["view_matrix"].SetValue(view_matrix);
             //program["projection_matrix"].SetValue(Matrix4.CreatePerspectiveFieldOfView(0.45f, (float)width / height, 0.1f, 1000f));
-            //program["projection_matrix"].SetValue(Matrix4.CreatePerspectiveFieldOfView(0.45f, (float)width / height, 0.1f, 1000f));
-            program["projection_matrix"].SetValue(Matrix4.CreateOrthographic(20, 20, 0.1f, 1000f));
-            program["modelview_matrix"].SetValue(Matrix4.CreateTranslation(Vector3.Zero));
+            program["projection_matrix"].SetValue(Matrix4.CreatePerspectiveFieldOfView(0.45f, (float)width / height, 0.1f, 1000f));
+            //program["projection_matrix"].SetValue(Matrix4.CreateOrthographic(20, 20, 0.1f, 1000f));
+
             var time = 0.0f;
             program["time"].SetValue(time);
           
@@ -135,10 +135,24 @@ void main(void)
                             break;
 
                         case SDL.SDL_EventType.SDL_MOUSEMOTION:
-                            //program["modelview_matrix"].SetValue(Matrix4.CreateRotationY(e.button.x / 20.0f)
-                            //    * Matrix4.CreateRotationX(e.button.y / 20.0f)
-                            //    * Matrix4.CreateTranslation(new Vector3(0, 0, -2)) 
-                            //    );
+                            if ((e.motion.state & 1) == 1)
+                            {
+                                view_matrix = view_matrix
+                                    * Matrix4.CreateRotationY(e.motion.xrel / 100.0f)
+                                    * Matrix4.CreateRotationX(e.motion.yrel / 100.0f);
+                                program["view_matrix"].SetValue(view_matrix);
+                            }
+                            else if ((e.motion.state & 0x04) == 0x04)
+                            {
+                                view_matrix = view_matrix
+                                    * Matrix4.CreateTranslation(new Vector3(-e.motion.xrel / 5.0f, e.motion.yrel / 5.0f, 0));
+                                program["view_matrix"].SetValue(view_matrix);
+                            }
+                            break;
+
+                        case SDL.SDL_EventType.SDL_MOUSEWHEEL:
+                            view_matrix = view_matrix * Matrix4.CreateTranslation(new Vector3(0, 0, e.wheel.y / 0.1f));
+                            program["view_matrix"].SetValue(view_matrix);
                             break;
 
                         case SDL.SDL_EventType.SDL_KEYDOWN:
